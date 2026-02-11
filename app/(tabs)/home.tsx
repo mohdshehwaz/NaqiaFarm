@@ -1,12 +1,43 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Image,
+} from "react-native";
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useTranslation } from "../context/useTranslation";
 
+const crops = [
+  {
+    id: "1",
+    key: "sugarcane",
+    image: require("../../assets/images/sugarcane.jpg"),
+  },
+  {
+    id: "2",
+    key: "wheat",
+    image: require("../../assets/images/wheat.jpg"),
+  },
+  {
+    id: "3",
+    key: "rice",
+    image: require("../../assets/images/rice.jpg"),
+  },
+  {
+    id: "4",
+    key: "mustard",
+    image: require("../../assets/images/mustard.jpg"),
+  },
+];
+
+
+
 export default function HomeScreen() {
   const { setLanguage, language } = useLanguage();
   const { t } = useTranslation();
-
   const [open, setOpen] = useState(false);
 
   const changeLang = (lang: "en" | "hi" | "ur") => {
@@ -16,15 +47,16 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Top Right Language Dropdown */}
+      {/* 🔹 Language Switch */}
       <View style={styles.topRight}>
-      <Text style={styles.changeLangText}>
-        {t("common.changeLanguage")}
-      </Text>
-        <Pressable onPress={() => setOpen(!open)} style={styles.langButton}>
-        <Text style={styles.langText}>
-          {language === "hi" ? "HI" : language === "ur" ? "UR" : "EN"}
+        <Text style={styles.changeLangText}>
+          {t("common.changeLanguage")}
         </Text>
+
+        <Pressable onPress={() => setOpen(!open)} style={styles.langButton}>
+          <Text style={styles.langText}>
+            {language === "hi" ? "HI" : language === "ur" ? "UR" : "EN"}
+          </Text>
         </Pressable>
 
         {open && (
@@ -32,11 +64,9 @@ export default function HomeScreen() {
             <Pressable onPress={() => changeLang("hi")} style={styles.item}>
               <Text>हिंदी</Text>
             </Pressable>
-
             <Pressable onPress={() => changeLang("en")} style={styles.item}>
               <Text>English</Text>
             </Pressable>
-
             <Pressable onPress={() => changeLang("ur")} style={styles.item}>
               <Text>اردو</Text>
             </Pressable>
@@ -44,83 +74,120 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* 🔹 Main Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>{t("home.title")}</Text>
-        <Text style={styles.subtitle}>{t("home.subtitle")}</Text>
-      </View>
+      {/* 🔹 Heading */}
+      <Text style={styles.heading}>{t("home.heading")}</Text>
+
+      {/* 🔹 Crop Cards */}
+      <FlatList
+        data={crops}
+        numColumns={2}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        columnWrapperStyle={{ justifyContent: "space-between" }}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image source={item.image} style={styles.image} />
+            <Text style={styles.cardTitle}>
+              {t(`home.crops.${item.key}`)}
+            </Text>
+          </View>
+        )}
+      />
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  changeLangText: {
-    fontSize: 12,
-    color: "#1b5e20",
-    marginBottom: 2,   // 🔼 text aur button paas aa gaye
-    textAlign: "right",
-    fontWeight: "500",
-  },
-  
   container: {
     flex: 1,
-    backgroundColor: "#f5f7f4",
+    backgroundColor: "#ffffff", // 🤍 clean white
+    paddingTop: 60,
   },
 
   topRight: {
     position: "absolute",
     top: 16,
     right: 16,
-    alignItems: "flex-end", // 🔒 important
+    alignItems: "flex-end",
     zIndex: 100,
-  },  
+  },
+
+  changeLangText: {
+    fontSize: 12,
+    color: "#1b5e20",
+    marginBottom: 2,
+    fontWeight: "500",
+  },
 
   langButton: {
     backgroundColor: "#2e7d32",
-    paddingVertical: 6,
+    width: 48,
+    height: 34,
     borderRadius: 8,
-    width: 48,              // 🔒 FIXED
-    alignItems: "center",   // text center
+    alignItems: "center",
+    justifyContent: "center",
   },
-  
 
   langText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
   },
 
   dropdown: {
     position: "absolute",
-    top: 42,    // ⬆️ pehle 46/50 tha
+    top: 42,
     right: 0,
-  
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 4,
-    overflow: "hidden",
     width: 130,
-  }, 
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    elevation: 5,
+    overflow: "hidden",
+  },
+
   item: {
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: "center",
-  },  
-
-  content: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
   },
 
-  title: {
-    fontSize: 24,
+  heading: {
+    fontSize: 22,
     fontWeight: "700",
     color: "#1b5e20",
+    marginLeft: 16,
+    marginBottom: 12,
   },
 
-  subtitle: {
-    marginTop: 8,
+  list: {
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+  },
+
+  card: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    margin: 8,
+    borderRadius: 14,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    alignItems: "center",
+    paddingBottom: 12,
+  },
+
+  image: {
+    width: "100%",
+    height: 120,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+  },
+
+  cardTitle: {
+    marginTop: 10,
     fontSize: 16,
-    color: "#555",
+    fontWeight: "600",
+    color: "#2e7d32",
   },
 });
