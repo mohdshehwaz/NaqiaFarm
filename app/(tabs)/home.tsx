@@ -7,6 +7,7 @@ import {
   Image,
 } from "react-native";
 import { useState } from "react";
+import { useRouter } from "expo-router";
 import { useLanguage } from "../context/LanguageContext";
 import { useTranslation } from "../context/useTranslation";
 
@@ -33,9 +34,8 @@ const crops = [
   },
 ];
 
-
-
 export default function HomeScreen() {
+  const router = useRouter(); // 👈 add this
   const { setLanguage, language } = useLanguage();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Language Switch */}
+      {/* Language Switch */}
       <View style={styles.topRight}>
         <Text style={styles.changeLangText}>
           {t("common.changeLanguage")}
@@ -74,10 +74,10 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* 🔹 Heading */}
+      {/* Heading */}
       <Text style={styles.heading}>{t("home.heading")}</Text>
 
-      {/* 🔹 Crop Cards */}
+      {/* Crop Cards */}
       <FlatList
         data={crops}
         numColumns={2}
@@ -85,15 +85,22 @@ export default function HomeScreen() {
         contentContainerStyle={styles.list}
         columnWrapperStyle={{ justifyContent: "space-between" }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <Pressable
+            style={styles.card}
+            onPress={() =>
+              router.push({
+                pathname: "/crop/[id]",
+                params: { id: item.key },
+              })
+            }
+          >
             <Image source={item.image} style={styles.image} />
             <Text style={styles.cardTitle}>
               {t(`home.crops.${item.key}`)}
             </Text>
-          </View>
+          </Pressable>
         )}
       />
-
     </View>
   );
 }
@@ -101,7 +108,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff", // 🤍 clean white
+    backgroundColor: "#ffffff",
     paddingTop: 60,
   },
 
