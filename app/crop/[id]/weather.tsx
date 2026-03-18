@@ -7,7 +7,7 @@ export default function WeatherScreen() {
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const API_KEY = "d0199de973310d07164caa0ef4ad6d61";
+  const API_KEY = "6d61";
 
   useEffect(() => {
     getLocationWeather();
