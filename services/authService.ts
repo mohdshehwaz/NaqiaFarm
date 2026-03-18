@@ -1,5 +1,7 @@
 // services/authService.ts
 
+import { API_BASE_URL } from "./api";
+
 export const sendOtp = async (mobile: string) => {
     return new Promise<{ otp: string }>((resolve) => {
       setTimeout(() => {
@@ -23,4 +25,8 @@ export const sendOtp = async (mobile: string) => {
       }, 800);
     });
   };
+
+  
+
+
   

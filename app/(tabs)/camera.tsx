@@ -1,15 +1,10 @@
-import { View, Text } from 'react-native';
-import i18n from '../localization';
-import { useTranslation } from '../context/useTranslation';
+import { useEffect } from "react";
+import { router } from "expo-router";
 
-export default function Camera() {
-  const { t } = useTranslation();
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      
+export default function CameraRedirect() {
+  useEffect(() => {
+    router.replace("/(scan)/camera");
+  }, []);
 
-      <Text>{t("camera.title")}</Text>
-
-    </View>
-  );
+  return null;
 }

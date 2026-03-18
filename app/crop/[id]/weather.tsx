@@ -16,7 +16,7 @@ export default function WeatherScreen() {
   const getLocationWeather = async () => {
 
     try {
-
+      
       // Permission
       let { status } = await Location.requestForegroundPermissionsAsync();
 

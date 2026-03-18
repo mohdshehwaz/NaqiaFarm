@@ -7,6 +7,7 @@ export default function SoilScreen() {
 
   const { id } = useLocalSearchParams();
   const crop = id?.toString();
+  
 
   const { t } = useTranslation();
 
