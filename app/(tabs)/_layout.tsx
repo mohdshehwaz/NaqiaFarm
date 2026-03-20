@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { colors } from "../styles/colors";
+import { useRouter } from "expo-router";
 
 function CenteredTabIcon({
   icon,
@@ -22,6 +23,7 @@ function CenteredTabIcon({
 }
 
 export default function TabLayout() {
+  const router = useRouter();
   return (
     <Tabs
       screenOptions={{
@@ -72,9 +74,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="account"
         options={{
-          tabBarButton: ({ onPress, accessibilityState }) => (
+          tabBarButton: ({ accessibilityState }) => (
             <Pressable
-              onPress={onPress}
+              onPress={() => {
+                router.replace("/(tabs)/account"); // 🔥 ye fix hai
+              }}
               accessibilityState={accessibilityState}
               style={styles.sideTabButton}
             >
@@ -85,7 +89,7 @@ export default function TabLayout() {
             </Pressable>
           ),
         }}
-      />
+/>
     </Tabs>
   );
 }

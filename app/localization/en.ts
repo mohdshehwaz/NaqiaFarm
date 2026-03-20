@@ -259,6 +259,33 @@ const en = {
         "Apply balanced fertilizers."
       ]
     }
+  },
+  account: {
+    title: "Account",
+    companyName: "Naqia Farm",
+    tagline: "Smart Crop Care & Disease Solutions",
+    menu: {
+      orders: "Orders / History",
+      language: "Language",
+      help: "Help & Support",
+      address: "Office Address",
+    },
+  },
+  office: {
+    title: "Office Address",
+    addressTitle: "KrishiCool",
+    address: "Hisampur, Pakwada Dingarpur Road, Moradabad, UP, India",
+    phone: "+919718060881",
+    email: "mohdshehwaz@gmail.com",
+    openMap: "Open in Maps"
+  },
+  help: {
+    title: "Help & Support",
+    heading: "Need Help?",
+    subtitle: "Contact us for any farming guidance or issues",
+    call: "Call Support",
+    whatsapp: "Chat on WhatsApp",
+    email: "Send Email",
   }
 };
 
