@@ -8,6 +8,10 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useLanguage } from "../context/LanguageContext";
 import { useTranslation } from "../context/useTranslation";
 
@@ -35,10 +39,12 @@ const crops = [
 ];
 
 export default function HomeScreen() {
-  const router = useRouter(); // 👈 add this
+  const router = useRouter();
   const { setLanguage, language } = useLanguage();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   const changeLang = (lang: "en" | "hi" | "ur") => {
     setLanguage(lang);
@@ -46,85 +52,83 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Language Switch */}
-      <View style={styles.topRight}>
-        <Text style={styles.changeLangText}>
-          {t("common.changeLanguage")}
-        </Text>
-
-        <Pressable onPress={() => setOpen(!open)} style={styles.langButton}>
-          <Text style={styles.langText}>
-            {language === "hi" ? "HI" : language === "ur" ? "UR" : "EN"}
-          </Text>
-        </Pressable>
-
-        {open && (
-          <View style={styles.dropdown}>
-            <Pressable onPress={() => changeLang("hi")} style={styles.item}>
-              <Text>हिंदी</Text>
-            </Pressable>
-            <Pressable onPress={() => changeLang("en")} style={styles.item}>
-              <Text>English</Text>
-            </Pressable>
-            <Pressable onPress={() => changeLang("ur")} style={styles.item}>
-              <Text>اردو</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* Heading */}
-      <Text style={styles.heading}>{t("home.heading")}</Text>
-
-      {/* Crop Cards */}
-      <FlatList
-        data={crops}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        columnWrapperStyle={{ justifyContent: "space-between" }}
-        renderItem={({ item }) => (
+    <SafeAreaView style={styles.safe}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        
+        {/* 🔥 Language Switch (FIXED) */}
+        <View style={[styles.topRight, { top: insets.top + 10 }]}>
           <Pressable
-            style={styles.card}
-            onPress={() =>
-              router.push({
-                pathname: "/crop/[id]",
-                params: { id: item.key },
-              })
-            }
+            onPress={() => setOpen(!open)}
+            style={styles.langButton}
           >
-            <Image source={item.image} style={styles.image} />
-            <Text style={styles.cardTitle}>
-              {t(`home.crops.${item.key}`)}
+            <Text style={styles.langText}>
+              {language === "hi" ? "HI" : language === "ur" ? "UR" : "EN"}
             </Text>
           </Pressable>
-        )}
-      />
-    </View>
+
+          {open && (
+            <View style={styles.dropdown}>
+              <Pressable onPress={() => changeLang("hi")} style={styles.item}>
+                <Text>हिंदी</Text>
+              </Pressable>
+              <Pressable onPress={() => changeLang("en")} style={styles.item}>
+                <Text>English</Text>
+              </Pressable>
+              <Pressable onPress={() => changeLang("ur")} style={styles.item}>
+                <Text>اردو</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        {/* Heading */}
+        <Text style={styles.heading}>{t("home.heading")}</Text>
+
+        {/* Crop Cards */}
+        <FlatList
+          data={crops}
+          numColumns={2}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.card}
+              onPress={() =>
+                router.push({
+                  pathname: "/crop/[id]",
+                  params: { id: item.key },
+                })
+              }
+            >
+              <Image source={item.image} style={styles.image} />
+              <Text style={styles.cardTitle}>
+                {t(`home.crops.${item.key}`)}
+              </Text>
+            </Pressable>
+          )}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 60,
   },
 
   topRight: {
     position: "absolute",
-    top: 16,
     right: 16,
     alignItems: "flex-end",
     zIndex: 100,
-  },
-
-  changeLangText: {
-    fontSize: 12,
-    color: "#1b5e20",
-    marginBottom: 2,
-    fontWeight: "500",
   },
 
   langButton: {
@@ -163,6 +167,7 @@ const styles = StyleSheet.create({
     color: "#1b5e20",
     marginLeft: 16,
     marginBottom: 12,
+    marginTop: 10,
   },
 
   list: {

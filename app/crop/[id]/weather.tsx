@@ -1,37 +1,44 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import * as Location from "expo-location";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function WeatherScreen() {
-
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const API_KEY = "6d61";
+  const insets = useSafeAreaInsets();
+
+  
 
   useEffect(() => {
     getLocationWeather();
   }, []);
 
   const getLocationWeather = async () => {
-
     try {
-      
-      // Permission
       let { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
         alert("Location permission denied");
+        setLoading(false);
         return;
       }
 
-      // Get location
       let location = await Location.getCurrentPositionAsync({});
 
       const lat = location.coords.latitude;
       const lon = location.coords.longitude;
 
-      // Weather API
       const res = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
       );
@@ -40,142 +47,167 @@ export default function WeatherScreen() {
 
       setWeather(data);
       setLoading(false);
-
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
-
   };
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large"/>
-      </View>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!weather) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text>Unable to load weather</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: insets.top + 6,
+          paddingBottom: 30,
+          paddingHorizontal: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 🌤 Main Weather Card */}
+        <View style={styles.mainCard}>
+          <Text style={styles.city}>{weather.name}</Text>
 
-      <View style={styles.mainCard}>
+          <Text style={styles.temp}>
+            {Math.round(weather.main.temp)}°
+          </Text>
 
-        <Text style={styles.city}>{weather.name}</Text>
+          <Text style={styles.condition}>
+            {weather.weather[0].main}
+          </Text>
 
-        <View style={styles.tempRow}>
-          <Text style={styles.temp}>{Math.round(weather.main.temp)}°</Text>
-          <Text style={styles.condition}>{weather.weather[0].main}</Text>
+          <Text style={styles.highLow}>
+            H:{Math.round(weather.main.temp_max)}°  L:
+            {Math.round(weather.main.temp_min)}°
+          </Text>
         </View>
 
-        <Text style={styles.highLow}>
-          H:{Math.round(weather.main.temp_max)}°  
-          L:{Math.round(weather.main.temp_min)}°
-        </Text>
+        {/* 📊 Info Grid */}
+        <View style={styles.grid}>
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>💧 Humidity</Text>
+            <Text style={styles.value}>
+              {weather.main.humidity}%
+            </Text>
+          </View>
 
-      </View>
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>🌬 Wind</Text>
+            <Text style={styles.value}>
+              {weather.wind.speed} m/s
+            </Text>
+          </View>
 
-      <View style={styles.grid}>
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>📊 Pressure</Text>
+            <Text style={styles.value}>
+              {weather.main.pressure} mb
+            </Text>
+          </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Humidity</Text>
-          <Text style={styles.infoValue}>{weather.main.humidity}%</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>👁 Visibility</Text>
+            <Text style={styles.value}>
+              {weather.visibility / 1000} km
+            </Text>
+          </View>
         </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Wind</Text>
-          <Text style={styles.infoValue}>{weather.wind.speed} m/s</Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Pressure</Text>
-          <Text style={styles.infoValue}>{weather.main.pressure} mb</Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Visibility</Text>
-          <Text style={styles.infoValue}>{weather.visibility / 1000} km</Text>
-        </View>
-
-      </View>
-
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-
-  container:{
-    flex:1,
-    backgroundColor:"#eef2ff",
-    padding:20
+  safe: {
+    flex: 1,
+    backgroundColor: "#eef7ee",
   },
 
-  mainCard:{
-    backgroundColor:"#4A90E2",
-    borderRadius:25,
-    padding:30,
-    marginBottom:20,
-    elevation:8
+  mainCard: {
+    backgroundColor: "#2e7d32",
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
   },
 
-  city:{
-    color:"white",
-    fontSize:20,
-    fontWeight:"600"
+  city: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "600",
   },
 
-  tempRow:{
-    flexDirection:"row",
-    alignItems:"center",
-    marginTop:10
+  temp: {
+    fontSize: 64,
+    color: "#fff",
+    fontWeight: "800",
+    marginTop: 10,
   },
 
-  temp:{
-    fontSize:70,
-    color:"white",
-    fontWeight:"bold"
+  condition: {
+    color: "#d0f0d0",
+    fontSize: 18,
+    marginTop: 4,
   },
 
-  condition:{
-    color:"white",
-    fontSize:22,
-    marginLeft:10
+  highLow: {
+    color: "#fff",
+    marginTop: 10,
   },
 
-  highLow:{
-    color:"white",
-    marginTop:10
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
 
-  grid:{
-    flexDirection:"row",
-    flexWrap:"wrap",
-    justifyContent:"space-between"
+  infoCard: {
+    width: "48%",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
   },
 
-  infoCard:{
-    width:"48%",
-    backgroundColor:"white",
-    borderRadius:20,
-    padding:20,
-    marginBottom:15,
-    elevation:5
+  label: {
+    fontSize: 14,
+    color: "#777",
   },
 
-  infoTitle:{
-    color:"#888"
+  value: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 4,
+    color: "#1b5e20",
   },
 
-  infoValue:{
-    fontSize:22,
-    fontWeight:"bold",
-    marginTop:5
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-
-  center:{
-    flex:1,
-    justifyContent:"center",
-    alignItems:"center"
-  }
-
 });

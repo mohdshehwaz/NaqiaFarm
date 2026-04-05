@@ -1,13 +1,22 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "../../context/useTranslation";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function GuideScreen() {
-
   const { id } = useLocalSearchParams();
   const crop = id?.toString();
-
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   if (!crop) return null;
 
@@ -23,67 +32,127 @@ export default function GuideScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{
+          paddingTop: insets.top + 6,
+          paddingBottom: 30,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
 
-      {/* Heading */}
-      <Text style={styles.heading}>
-        🌾 {t(`home.crops.${crop}`)} {t("features.guide")}
-      </Text>
-
-      {sections.map((section) => (
-        <View key={section.key} style={styles.card}>
-
-          <Text style={styles.title}>
-            {section.icon} {t(`cropDetail.sections.${section.key}`)}
+        {/* 🌟 Header */}
+        <View style={styles.headerCard}>
+          <Text style={styles.headerTitle}>
+            🌾 {t(`home.crops.${crop}`)}
           </Text>
-
-          <Text style={styles.text}>
-            {t(`cropDetail.${crop}.${section.key}`)}
+          <Text style={styles.headerSub}>
+            {t("features.guide")}
           </Text>
-
         </View>
-      ))}
 
-    </ScrollView>
+        {/* 📦 Sections */}
+        {sections.map((section) => (
+          <View key={section.key} style={styles.card}>
+
+            {/* Row */}
+            <View style={styles.row}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.icon}>{section.icon}</Text>
+              </View>
+
+              <Text style={styles.title}>
+                {t(`cropDetail.sections.${section.key}`)}
+              </Text>
+            </View>
+
+            {/* Content */}
+            <Text style={styles.text}>
+              {t(`cropDetail.${crop}.${section.key}`)}
+            </Text>
+
+          </View>
+        ))}
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: "#eef7ee",
+  },
 
   container: {
     flex: 1,
-    backgroundColor: "#f3fff3",
-    padding: 16
+    paddingHorizontal: 16,
   },
 
-  heading: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#2e7d32",
-    marginBottom: 20
+  headerCard: {
+    backgroundColor: "#2e7d32",
+    padding: 18,
+    borderRadius: 18,
+    marginBottom: 18,
+  },
+
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#ffffff",
+  },
+
+  headerSub: {
+    fontSize: 14,
+    color: "#d0f0d0",
+    marginTop: 4,
   },
 
   card: {
     backgroundColor: "#ffffff",
-    padding: 18,
-    borderRadius: 15,
-    marginBottom: 15,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 14,
+
     elevation: 3,
-    borderLeftWidth: 5,
-    borderLeftColor: "#4CAF50"
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#e8f5e9",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  icon: {
+    fontSize: 18,
   },
 
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
-    marginBottom: 6,
-    color: "#1b5e20"
+    color: "#1b5e20",
   },
 
   text: {
-    fontSize: 15,
+    fontSize: 14.5,
     lineHeight: 22,
-    color: "#444"
-  }
-
+    color: "#444",
+    marginTop: 4,
+  },
 });

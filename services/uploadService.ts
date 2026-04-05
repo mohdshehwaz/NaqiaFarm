@@ -1,8 +1,6 @@
 import { API_BASE_URL } from "./api";
 
-export const uploadCropImage = async (imageUri: string) => {
-  console.log("api url is -> ", API_BASE_URL);
-
+export const uploadCropImage = async (imageUri: string, lang: string) => {
   const formData = new FormData();
 
   formData.append("file", {
@@ -11,12 +9,13 @@ export const uploadCropImage = async (imageUri: string) => {
     type: "image/jpeg",
   } as any);
 
+  formData.append("lang", lang); // 👈 🔥 IMPORTANT
+
   const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     body: formData,
   });
 
-  // 👇 IMPORTANT DEBUG
   const text = await response.text();
   console.log("RAW RESPONSE => ", text);
 

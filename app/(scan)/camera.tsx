@@ -10,18 +10,24 @@ import { useRef, useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { uploadCropImage } from "../../services/uploadService";
+import { useLanguage } from "../context/LanguageContext"; // ✅ add
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef<any>(null);
 
+  const { language } = useLanguage(); // ✅ language milegi yaha se
+
   if (!permission) return <View />;
 
   if (!permission.granted) {
     return (
       <View style={styles.center}>
-        <Text>Camera permission required</Text>
+        <Text style={{ marginBottom: 10 }}>
+          Camera permission required
+        </Text>
+
         <TouchableOpacity style={styles.button} onPress={requestPermission}>
           <Text style={styles.buttonText}>Allow Camera</Text>
         </TouchableOpacity>
@@ -30,13 +36,18 @@ export default function CameraScreen() {
   }
 
   const takePhoto = async () => {
-    const picture = await cameraRef.current?.takePictureAsync();
-    if (!picture?.uri) return;
-
-    setLoading(true);
-
     try {
-      const res = await uploadCropImage(picture.uri);
+      const picture = await cameraRef.current?.takePictureAsync();
+
+      if (!picture?.uri) return;
+
+      setLoading(true);
+
+      // 🔥 API call with language
+      const res = await uploadCropImage(
+        picture.uri,
+        language || "en" // fallback
+      );
 
       const data = res?.data || res;
 
@@ -52,17 +63,19 @@ export default function CameraScreen() {
         alert("No plant detected ❌");
       }
     } catch (error) {
+      console.log(error);
       alert("Something went wrong ❌");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <View style={styles.container}>
+      {/* 📷 Camera */}
       <CameraView ref={cameraRef} style={styles.camera} />
 
-      {/* ❌ CLOSE BUTTON */}
+      {/* ❌ Close Button */}
       <TouchableOpacity
         style={styles.closeBtn}
         onPress={() => router.replace("/(tabs)/home")}
@@ -70,13 +83,15 @@ export default function CameraScreen() {
         <Ionicons name="close" size={28} color="#fff" />
       </TouchableOpacity>
 
+      {/* 🔄 Loading */}
       {loading && (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="#2e7d32" />
-          <Text>Analyzing...</Text>
+          <Text style={{ marginTop: 5 }}>Analyzing...</Text>
         </View>
       )}
 
+      {/* 📸 Capture Button */}
       <TouchableOpacity style={styles.captureBtn} onPress={takePhoto}>
         <View style={styles.captureCircle} />
       </TouchableOpacity>
@@ -85,10 +100,16 @@ export default function CameraScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "black" },
-  camera: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: "black",
+  },
 
-  // ❌ CLOSE BUTTON STYLE
+  camera: {
+    flex: 1,
+  },
+
+  // ❌ Close button
   closeBtn: {
     position: "absolute",
     top: 50,
@@ -98,6 +119,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
 
+  // 📸 Capture button
   captureBtn: {
     position: "absolute",
     bottom: 40,
@@ -105,23 +127,28 @@ const styles = StyleSheet.create({
   },
 
   captureCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "white",
+    width: 85,
+    height: 85,
+    borderRadius: 50,
+    backgroundColor: "#fff",
     borderWidth: 5,
     borderColor: "#2e7d32",
   },
 
+  // 🔄 Loading UI
   loading: {
     position: "absolute",
-    top: 60,
+    top: 70,
     alignSelf: "center",
-    backgroundColor: "white",
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 5,
   },
 
+  // Permission screen
   center: {
     flex: 1,
     justifyContent: "center",
@@ -130,11 +157,13 @@ const styles = StyleSheet.create({
 
   button: {
     backgroundColor: "#2e7d32",
-    padding: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 10,
   },
 
   buttonText: {
-    color: "white",
+    color: "#fff",
+    fontWeight: "600",
   },
 });
