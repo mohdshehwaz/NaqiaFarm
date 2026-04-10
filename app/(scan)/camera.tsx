@@ -10,6 +10,7 @@ import { useRef, useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { uploadCropImage } from "../../services/uploadService";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useLanguage } from "../context/LanguageContext"; // ✅ add
 
 export default function CameraScreen() {
@@ -34,41 +35,92 @@ export default function CameraScreen() {
       </View>
     );
   }
-
   const takePhoto = async () => {
-    try {
-      const picture = await cameraRef.current?.takePictureAsync();
+  try {
+    const picture = await cameraRef.current?.takePictureAsync({
+      quality: 0.7, // 👈 already reduce
+    });
 
-      if (!picture?.uri) return;
+    if (!picture?.uri) return;
 
-      setLoading(true);
+    setLoading(true);
 
-      // 🔥 API call with language
-      const res = await uploadCropImage(
-        picture.uri,
-        language || "en" // fallback
-      );
-
-      const data = res?.data || res;
-
-      if (data?.identification) {
-        router.push({
-          pathname: "/(scan)/result",
-          params: {
-            data: JSON.stringify(data),
-            image: picture.uri,
-          },
-        });
-      } else {
-        alert("No plant detected ❌");
+    // 🔥 COMPRESS IMAGE
+    const compressed = await ImageManipulator.manipulateAsync(
+      picture.uri,
+      [
+        { resize: { width: 800 } }, // 👈 resize (important)
+      ],
+      {
+        compress: 0.6, // 👈 0 to 1 (0.6 best)
+        format: ImageManipulator.SaveFormat.JPEG,
       }
-    } catch (error) {
-      console.log(error);
-      alert("Something went wrong ❌");
-    } finally {
-      setLoading(false);
+    );
+
+    console.log("Original:", picture.uri);
+    console.log("Compressed:", compressed.uri);
+
+    // 🔥 send compressed image
+    const res = await uploadCropImage(
+      compressed.uri,
+      language || "en"
+    );
+
+    const data = res?.data || res;
+
+    if (data?.identification) {
+      router.push({
+        pathname: "/(scan)/result",
+        params: {
+          data: JSON.stringify(data),
+          image: compressed.uri, // 👈 use compressed
+        },
+      });
+    } else {
+      alert("No plant detected ❌");
     }
-  };
+  } catch (error) {
+    console.log(error);
+    alert("Something went wrong ❌");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const takePhoto = async () => {
+  //   try {
+  //     const picture = await cameraRef.current?.takePictureAsync();
+
+  //     if (!picture?.uri) return;
+
+  //     setLoading(true);
+
+  //     // 🔥 API call with language
+  //     const res = await uploadCropImage(
+  //       picture.uri,
+  //       language || "en" // fallback
+  //     );
+
+  //     const data = res?.data || res;
+
+  //     if (data?.identification) {
+  //       router.push({
+  //         pathname: "/(scan)/result",
+  //         params: {
+  //           data: JSON.stringify(data),
+  //           image: picture.uri,
+  //         },
+  //       });
+  //     } else {
+  //       alert("No plant detected ❌");
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     alert("Something went wrong ❌");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
