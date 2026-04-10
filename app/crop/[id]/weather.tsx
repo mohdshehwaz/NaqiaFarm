@@ -18,7 +18,7 @@ export default function WeatherScreen() {
 
   const insets = useSafeAreaInsets();
 
-  
+  const API_KEY = "d0199de973310d07164caa0ef4ad6d61";
 
   useEffect(() => {
     getLocationWeather();

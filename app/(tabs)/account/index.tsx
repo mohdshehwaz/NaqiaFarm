@@ -45,7 +45,7 @@ export default function AccountScreen() {
         <MenuItem
           icon="receipt-outline"
           title={t("account.menu.orders")}
-          onPress={() => console.log("Orders clicked")}
+          onPress={() => router.push("/(tabs)/account/history")}
         />
 
         <MenuItem
