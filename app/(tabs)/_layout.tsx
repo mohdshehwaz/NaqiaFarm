@@ -54,8 +54,9 @@ export default function TabLayout() {
 
       {/* CAMERA FAB */}
       <Tabs.Screen
-        name="camera"
+        name="scanner" // 👈 Check karo ki file ka naam app/(tabs)/scanner.tsx hi hai
         options={{
+          tabBarLabel: "Camera", // Background logic ke liye
           tabBarButton: ({ onPress, accessibilityState }) => (
             <Pressable
               onPress={onPress}
@@ -63,7 +64,7 @@ export default function TabLayout() {
               style={styles.fabButton}
             >
               <View style={styles.fab}>
-                <Ionicons name="camera" size={30} color={colors.white} />
+                <Ionicons name="camera" size={30} color="#fff" />
               </View>
             </Pressable>
           ),

@@ -49,6 +49,8 @@ export default function CameraScreen() {
     );
   }
 
+  // app/(scan)/camera.tsx ke andar
+
   const takePhoto = async () => {
     if (loading) return;
     try {
@@ -63,6 +65,10 @@ export default function CameraScreen() {
       setClickedImageUri(picture.uri);
       setShowAnalysisOverlay(true);
       setLoading(true);
+      setCurrentAnalysisStep(0); // Step 0: Analyzing Image
+
+      // Step 1: Thoda delay ke baad light level measure karo
+      setTimeout(() => setCurrentAnalysisStep(1), 800);
 
       const compressed = await ImageManipulator.manipulateAsync(
         picture.uri,
@@ -70,18 +76,24 @@ export default function CameraScreen() {
         { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      setCurrentAnalysisStep(0);
-      setTimeout(() => setCurrentAnalysisStep(1), 1000);
-
+      // API Call start
       const res = await uploadCropImage(compressed.uri, language || "en");
       const data = res?.data || res;
 
-      setTimeout(() => setCurrentAnalysisStep(2), 2000);
-      setTimeout(() => setCurrentAnalysisStep(3), 3000);
+      // Step 2: API response aane par bhi thoda wait dikhao
+      setTimeout(() => setCurrentAnalysisStep(2), 1000); // Identifying characteristics
 
+      // Step 3: Final Step
+      setTimeout(() => setCurrentAnalysisStep(3), 1200); // Preparing results
+
+      // Final Navigation: Sab steps khatam hone ke baad hi bhejenge
       setTimeout(() => {
         if (data?.identification) {
-          router.replace({
+          setShowAnalysisOverlay(false);
+          setLoading(false);
+          setClickedImageUri(null);
+
+          router.push({
             pathname: "/(scan)/result",
             params: { 
               data: JSON.stringify(data), 
@@ -93,12 +105,13 @@ export default function CameraScreen() {
           setShowAnalysisOverlay(false);
           cameraRef.current?.resumePreview();
         }
-      }, 3800);
+      }, 1500); // Pura process around 3.5 seconds lega, jo ideal hai
+
     } catch (error) {
       setShowAnalysisOverlay(false);
       cameraRef.current?.resumePreview();
     } finally {
-      setLoading(false);
+      // setLoading(false) yahan se hata diya hai kyunki navigation ke time upar handle kiya hai
     }
   };
 

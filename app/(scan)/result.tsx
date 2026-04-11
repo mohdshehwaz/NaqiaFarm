@@ -8,6 +8,7 @@ import {
   Pressable,
   Linking,
   BackHandler,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,7 +19,7 @@ export default function ResultScreen() {
   const insets = useSafeAreaInsets();
   let result = null;
 
-  // Gesture protection
+  // Android hardware back protection
   useEffect(() => {
     const handleBack = () => {
       router.replace("/(tabs)/home");
@@ -28,7 +29,6 @@ export default function ResultScreen() {
     return () => backHandler.remove();
   }, []);
 
-  // 🎯 Error Fix: 'as string' hata kar safe handling lagayi hai
   try {
     const rawData = params?.data;
     if (rawData) {
