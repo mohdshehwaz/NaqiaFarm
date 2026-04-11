@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,10 @@ import {
   Image,
   Pressable,
   Linking,
+  BackHandler,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function ResultScreen() {
@@ -20,23 +18,41 @@ export default function ResultScreen() {
   const insets = useSafeAreaInsets();
   let result = null;
 
+  // Gesture protection
+  useEffect(() => {
+    const handleBack = () => {
+      router.replace("/(tabs)/home");
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", handleBack);
+    return () => backHandler.remove();
+  }, []);
+
+  // 🎯 Error Fix: 'as string' hata kar safe handling lagayi hai
   try {
-    result = params?.data ? JSON.parse(params.data as string) : null;
+    const rawData = params?.data;
+    if (rawData) {
+      const dataStr = Array.isArray(rawData) ? rawData[0] : rawData;
+      result = JSON.parse(dataStr);
+    }
   } catch (e) {
-    console.log(e);
+    console.log("Parse Error:", e);
   }
 
-  const image = params?.image as string;
-
-  const callOffice = () => {
-    Linking.openURL("tel:+911234567890"); // 👈 Number change kar lena
-  };
+  const image = Array.isArray(params?.image) ? params.image[0] : params.image;
+  const callOffice = () => Linking.openURL("tel:+911234567890");
 
   if (!result) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <Text>No data found</Text>
+          <Text style={{ fontSize: 16, color: '#666' }}>Analysis data missing</Text>
+          <Pressable 
+            style={{ marginTop: 15, padding: 12, backgroundColor: '#2e7d32', borderRadius: 8 }}
+            onPress={() => router.replace("/(tabs)/home")}
+          >
+            <Text style={{ color: '#fff' }}>Go Back Home</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -44,63 +60,42 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 140 }}
-        showsVerticalScrollIndicator={false}
+      <Pressable 
+        style={[styles.closeIcon, { top: insets.top + 10 }]} 
+        onPress={() => router.replace("/(tabs)/home")}
       >
-        {/* 📸 Image */}
+        <Ionicons name="close-circle" size={40} color="rgba(0,0,0,0.5)" />
+      </Pressable>
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
         {image && <Image source={{ uri: image }} style={styles.image} />}
-
-        <Text style={styles.title}>🌿 Crop Analysis</Text>
-
-        {/* Cards (Identification, Problem, etc.) */}
-        <View style={styles.card}>
-          <Text style={styles.heading}>🔍 Identification</Text>
-          <Text>{result.identification}</Text>
+        <View style={{ padding: 15 }}>
+          <Text style={styles.title}>🌿 Crop Analysis</Text>
+          <View style={styles.card}>
+            <Text style={styles.heading}>🔍 Identification</Text>
+            <Text style={styles.bodyText}>{result.identification}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.heading}>⚠️ Problem</Text>
+            <Text style={styles.bodyText}>{result.problem}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.heading}>💊 Treatment</Text>
+            <Text style={styles.bodyText}>{result.treatment}</Text>
+          </View>
+          <Text style={styles.confidence}>Confidence: {result.confidence}</Text>
+          <Pressable style={styles.callBtnMain} onPress={callOffice}>
+            <Ionicons name="call" size={20} color="#fff" />
+            <Text style={styles.btnText}>Call Our Office</Text>
+          </Pressable>
         </View>
-
-        <View style={styles.card}>
-          <Text style={styles.heading}>⚠️ Problem</Text>
-          <Text>{result.problem}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.heading}>💊 Treatment</Text>
-          <Text>{result.treatment}</Text>
-        </View>
-
-        {/* 🎯 Confidence */}
-        <Text style={styles.confidence}>
-          Confidence: {result.confidence}
-        </Text>
-
-        {/* 📞 Call Button (Ab ye upar aa gaya hai) */}
-        <Pressable style={styles.callBtnMain} onPress={callOffice}>
-          <Ionicons name="call" size={22} color="#fff" />
-          <Text style={styles.btnText}>Call to Our Office</Text>
-        </Pressable>
       </ScrollView>
 
-      {/* 🔥 Bottom Sticky Buttons */}
-      <View
-        style={[
-          styles.bottomContainer,
-          { paddingBottom: insets.bottom + 10 },
-        ]}
-      >
-        {/* 📷 Camera */}
-        <Pressable
-          style={styles.cameraBtn}
-          onPress={() => router.replace("/(scan)/camera")}
-        >
-          <Ionicons name="camera" size={24} color="#1b5e20" />
+      <View style={[styles.bottomContainer, { paddingBottom: insets.bottom + 10 }]}>
+        <Pressable style={styles.cameraBtn} onPress={() => router.replace("/(scan)/camera")}>
+          <Ionicons name="camera" size={26} color="#1b5e20" />
         </Pressable>
-
-        {/* 🌿 My Plant Disease (Ab ye bottom bar mein hai) */}
-        <Pressable 
-          style={styles.historyBtn} 
-          onPress={() => router.push("/(tabs)/account/history")} // 👈 Path check kar lena
-        >
+        <Pressable style={styles.historyBtn} onPress={() => router.push("/(tabs)/account/history")}>
           <Ionicons name="leaf" size={20} color="#fff" />
           <Text style={styles.btnText}>My Plant Disease</Text>
         </Pressable>
@@ -110,67 +105,18 @@ export default function ResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  // ... (purane styles same hain)
-  safe: { flex: 1, backgroundColor: "#f5f5f5" },
-  image: { width: "100%", height: 250 },
-  title: { fontSize: 22, fontWeight: "700", margin: 15, color: "#1b5e20" },
-  card: { backgroundColor: "white", marginHorizontal: 15, marginVertical: 8, padding: 15, borderRadius: 12, elevation: 3 },
-  heading: { fontWeight: "700", marginBottom: 5, color: "#1b5e20" },
-  confidence: { margin: 15, color: "#2e7d32", fontWeight: "700" },
+  safe: { flex: 1, backgroundColor: "#f8f9fa" },
+  image: { width: "100%", height: 320, borderBottomLeftRadius: 25, borderBottomRightRadius: 25 },
+  closeIcon: { position: 'absolute', right: 20, zIndex: 60 },
+  title: { fontSize: 24, fontWeight: "800", marginBottom: 15, color: "#1b5e20" },
+  card: { backgroundColor: "white", marginBottom: 12, padding: 18, borderRadius: 16, elevation: 2 },
+  heading: { fontSize: 16, fontWeight: "700", marginBottom: 6, color: "#2e7d32" },
+  bodyText: { fontSize: 15, color: '#444', lineHeight: 22 },
+  confidence: { marginVertical: 10, color: "#666", fontStyle: 'italic' },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  // 📞 Upar wala Call Button
-  callBtnMain: {
-    marginHorizontal: 16,
-    marginTop: 10,
-    backgroundColor: "#3f7f63", // Darker green
-    height: 55,
-    borderRadius: 30,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-  },
-
-  // 🔥 Bottom Container
-  bottomContainer: {
-    position: "absolute",
-    bottom: 0, left: 0, right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    elevation: 10,
-  },
-
-  cameraBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // 🌿 My Plant Disease Button (Bottom Bar)
-  historyBtn: {
-    flex: 1,
-    marginLeft: 12,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#2e7d32", // Primary green
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  btnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    marginLeft: 8,
-  },
+  callBtnMain: { marginTop: 15, backgroundColor: "#3f7f63", height: 55, borderRadius: 30, flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  bottomContainer: { position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 12, backgroundColor: "#ffffff", borderTopLeftRadius: 25, borderTopRightRadius: 25, elevation: 20 },
+  cameraBtn: { width: 60, height: 60, borderRadius: 30, backgroundColor: "#e8f5e9", alignItems: "center", justifyContent: "center" },
+  historyBtn: { flex: 1, marginLeft: 15, height: 60, borderRadius: 30, backgroundColor: "#2e7d32", flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", marginLeft: 8 },
 });
