@@ -1,14 +1,16 @@
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
   Linking,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/colors";
 import { useTranslation } from "../../context/useTranslation";
-import MapView, { Marker } from "react-native-maps";
+import Constants from "expo-constants"; 
 
 export default function OfficeAddressScreen() {
   const { t } = useTranslation();
@@ -17,6 +19,7 @@ export default function OfficeAddressScreen() {
   const longitude = 78.6750473;
 
   const openMap = () => {
+    // URL fix: isse Google Maps sahi se khulega
     const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
     Linking.openURL(url);
   };
@@ -38,7 +41,11 @@ export default function OfficeAddressScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
+      {/* Notch Spacer */}
+      <View style={styles.topInset} />
+
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerText}>{t("office.title")}</Text>
@@ -56,23 +63,6 @@ export default function OfficeAddressScreen() {
           {t("office.address")}
         </Text>
 
-        {/* MAP */}
-        {/* <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude,
-            longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-        >
-          <Marker
-            coordinate={{ latitude, longitude }}
-            title="Office Location"
-          />
-        </MapView> */}
-
-        {/* BUTTON */}
         <Pressable style={styles.button} onPress={openMap}>
           <Text style={styles.buttonText}>
             {t("office.openMap")}
@@ -80,7 +70,7 @@ export default function OfficeAddressScreen() {
         </Pressable>
       </View>
 
-      {/* CONTACT */}
+      {/* CONTACT CARD - Ab ye center mein dikhega */}
       <View style={styles.card}>
         <Pressable style={styles.row} onPress={callNumber}>
           <Ionicons name="call-outline" size={20} color={colors.primary} />
@@ -106,9 +96,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f7f6",
   },
 
+  topInset: {
+    height: Constants.statusBarHeight,
+    backgroundColor: colors.primary,
+  },
+
   header: {
     backgroundColor: colors.primary,
-    paddingVertical: 15,
+    height: 55,
+    justifyContent: "center",
     alignItems: "center",
   },
 
@@ -124,7 +120,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     elevation: 3,
-    alignItems: "center", // ✅ center everything
+    alignItems: "center", // Card ke saare items ko center karne ke liye
   },
 
   title: {
@@ -138,13 +134,6 @@ const styles = StyleSheet.create({
     color: "#555",
     marginTop: 6,
     textAlign: "center",
-  },
-
-  map: {
-    width: "100%",
-    height: 180,
-    marginTop: 15,
-    borderRadius: 10,
   },
 
   button: {
@@ -165,10 +154,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center", // ✅ Isse text aur icon dono card ke center mein aayenge
     marginVertical: 10,
+    width: '100%', 
   },
 
   text: {
     marginLeft: 10,
+    fontSize: 16,
+    color: "#333",
   },
 });

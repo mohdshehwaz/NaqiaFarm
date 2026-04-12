@@ -4,8 +4,10 @@ import {
   StyleSheet,
   Pressable,
   Linking,
+  StatusBar, // StatusBar add kiya visual clean up ke liye
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants"; 
 import { colors } from "../../styles/colors";
 import { useTranslation } from "../../context/useTranslation";
 
@@ -29,8 +31,13 @@ export default function HelpScreen() {
 
   return (
     <View style={styles.container}>
-      
-      {/* HEADER */}
+      {/* 1. Status Bar ko transparent rakhein taki background color upar tak jaye */}
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* 2. Top Spacer: Ye sirf notch ka area cover karega */}
+      <View style={styles.topInset} />
+
+      {/* 3. FIXED HEADER: Iski height fix kar di hai taki ye "bada" na dikhe */}
       <View style={styles.header}>
         <Text style={styles.headerText}>
           {t("help.title")}
@@ -83,49 +90,71 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f6f5",
   },
 
+  // Notch area fix
+  topInset: {
+    height: Constants.statusBarHeight,
+    backgroundColor: colors.primary, // Isse notch ka color header se match karega
+  },
+
   header: {
     backgroundColor: colors.primary,
-    paddingVertical: 15,
+    height: 55, // Header ki fixed height taki wo bada na dikhe
+    justifyContent: "center", // Text ko vertically center karne ke liye
     alignItems: "center",
+    // Halka sa shadow taki niche ke content se alag dikhe
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
 
   headerText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700", // Thoda bold kiya design ke liye
+    letterSpacing: 0.5,
   },
 
   card: {
     backgroundColor: "#fff",
-    margin: 15,
-    padding: 20,
-    borderRadius: 16,
-    elevation: 3,
+    margin: 20, // Margin thoda badhaya layout clean karne ke liye
+    padding: 25,
+    borderRadius: 20, // More rounded for modern look
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
     alignItems: "center",
   },
 
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
-    marginTop: 10,
+    marginTop: 15,
     textAlign: "center",
+    color: "#333",
   },
 
   subtitle: {
-    color: "#666",
-    marginTop: 5,
+    color: "#777",
+    marginTop: 8,
     textAlign: "center",
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 10,
   },
 
   button: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 15,
+    gap: 10,
+    marginTop: 12,
     backgroundColor: "#2e7d32",
-    paddingVertical: 12,
+    paddingVertical: 14, // Buttons thode bade aur touch-friendly
     paddingHorizontal: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     width: "100%",
     justifyContent: "center",
   },
@@ -133,5 +162,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "600",
+    fontSize: 16,
   },
 });
