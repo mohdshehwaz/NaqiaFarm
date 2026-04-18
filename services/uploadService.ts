@@ -8,7 +8,7 @@ export const uploadCropImage = async (imageUri: string, lang: string) => {
     name: "crop.jpg",
     type: "image/jpeg",
   } as any);
-
+  console.log("path is -> ",API_BASE_URL);
   formData.append("lang", lang); // 👈 🔥 IMPORTANT
 
   const response = await fetch(`${API_BASE_URL}/upload`, {

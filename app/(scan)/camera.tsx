@@ -15,7 +15,7 @@ import { uploadCropImage } from "../../services/uploadService";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useLanguage } from "../context/LanguageContext";
 import { useIsFocused } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -27,6 +27,7 @@ export default function CameraScreen() {
   const cameraRef = useRef<any>(null);
   const isFocused = useIsFocused();
   const { language } = useLanguage();
+  const insets = useSafeAreaInsets(); // ✅ safe area
 
   useEffect(() => {
     const backAction = () => {
@@ -49,25 +50,22 @@ export default function CameraScreen() {
     );
   }
 
-  // app/(scan)/camera.tsx ke andar
-
   const takePhoto = async () => {
     if (loading) return;
+
     try {
-      cameraRef.current?.pausePreview();
-      const picture = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-      
-      if (!picture?.uri) {
-        cameraRef.current?.resumePreview();
-        return;
-      }
+      const picture = await cameraRef.current?.takePictureAsync({
+        quality: 0.7,
+        skipProcessing: true, // ✅ Android fix
+      });
+
+      if (!picture?.uri) return;
 
       setClickedImageUri(picture.uri);
       setShowAnalysisOverlay(true);
       setLoading(true);
-      setCurrentAnalysisStep(0); // Step 0: Analyzing Image
+      setCurrentAnalysisStep(0);
 
-      // Step 1: Thoda delay ke baad light level measure karo
       setTimeout(() => setCurrentAnalysisStep(1), 800);
 
       const compressed = await ImageManipulator.manipulateAsync(
@@ -76,17 +74,12 @@ export default function CameraScreen() {
         { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      // API Call start
       const res = await uploadCropImage(compressed.uri, language || "en");
       const data = res?.data || res;
 
-      // Step 2: API response aane par bhi thoda wait dikhao
-      setTimeout(() => setCurrentAnalysisStep(2), 1000); // Identifying characteristics
+      setTimeout(() => setCurrentAnalysisStep(2), 1000);
+      setTimeout(() => setCurrentAnalysisStep(3), 1200);
 
-      // Step 3: Final Step
-      setTimeout(() => setCurrentAnalysisStep(3), 1200); // Preparing results
-
-      // Final Navigation: Sab steps khatam hone ke baad hi bhejenge
       setTimeout(() => {
         if (data?.identification) {
           setShowAnalysisOverlay(false);
@@ -95,23 +88,18 @@ export default function CameraScreen() {
 
           router.push({
             pathname: "/(scan)/result",
-            params: { 
-              data: JSON.stringify(data), 
-              image: compressed.uri 
+            params: {
+              data: JSON.stringify(data),
+              image: compressed.uri,
             },
           });
         } else {
           alert("No plant detected ❌");
           setShowAnalysisOverlay(false);
-          cameraRef.current?.resumePreview();
         }
-      }, 1500); // Pura process around 3.5 seconds lega, jo ideal hai
-
+      }, 1500);
     } catch (error) {
       setShowAnalysisOverlay(false);
-      cameraRef.current?.resumePreview();
-    } finally {
-      // setLoading(false) yahan se hata diya hai kyunki navigation ke time upar handle kiya hai
     }
   };
 
@@ -127,35 +115,46 @@ export default function CameraScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {isFocused ? (
+      {isFocused && permission?.granted ? (
         <CameraView ref={cameraRef} style={styles.camera} />
       ) : (
         <View style={[styles.camera, { backgroundColor: "black" }]} />
       )}
 
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.replace("/(tabs)/home")}>
+      {/* CLOSE BUTTON */}
+      <TouchableOpacity
+        style={[styles.closeBtn, { top: insets.top + 10 }]}
+        onPress={() => router.replace("/(tabs)/home")}
+      >
         <Ionicons name="close" size={28} color="#fff" />
       </TouchableOpacity>
 
+      {/* CAPTURE BUTTON */}
       {!loading && (
-        <TouchableOpacity style={styles.captureBtn} onPress={takePhoto}>
+        <TouchableOpacity
+          style={[styles.captureBtn, { bottom: 40 + insets.bottom }]}
+          onPress={takePhoto}
+        >
           <View style={styles.captureCircle} />
         </TouchableOpacity>
       )}
 
+      {/* OVERLAY */}
       {showAnalysisOverlay && clickedImageUri && (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#f0f2f5", zIndex: 20 }]}>
           <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.overlayHeader}>
               <Text style={styles.overlayHeaderTitle}>Plant Identification</Text>
             </View>
+
             <Image source={{ uri: clickedImageUri }} style={styles.overlayImage} />
+
             <View style={styles.centeredStepsWrapper}>
               {[
                 { id: 0, text: "Analysing Image" },
                 { id: 1, text: "Measuring light level" },
                 { id: 2, text: "Identifying characteristics" },
-                { id: 3, text: "Preparing results" }
+                { id: 3, text: "Preparing results" },
               ].map((item) => (
                 <View key={item.id} style={styles.analysisRow}>
                   <View style={styles.iconBox}>{renderStatusIcon(item.id)}</View>
@@ -173,19 +172,100 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "black" },
   camera: { flex: 1 },
-  closeBtn: { position: "absolute", top: 50, left: 20, backgroundColor: "rgba(0,0,0,0.5)", padding: 10, borderRadius: 30, zIndex: 10 },
-  captureBtn: { position: "absolute", bottom: 40, alignSelf: "center" },
-  captureCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#fff", borderWidth: 6, borderColor: "rgba(46, 125, 50, 0.4)" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
-  permText: { marginBottom: 10, color: '#666', fontSize: 16 },
-  permBtn: { backgroundColor: "#2e7d32", paddingVertical: 12, paddingHorizontal: 25, borderRadius: 12 },
+
+  closeBtn: {
+    position: "absolute",
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 10,
+    borderRadius: 30,
+    zIndex: 10,
+  },
+
+  captureBtn: {
+    position: "absolute",
+    alignSelf: "center",
+  },
+
+  captureCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#fff",
+    borderWidth: 6,
+    borderColor: "rgba(46, 125, 50, 0.4)",
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+
+  permText: { marginBottom: 10, color: "#666", fontSize: 16 },
+
+  permBtn: {
+    backgroundColor: "#2e7d32",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+  },
+
   permBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  overlayHeader: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#e0e4eb', alignItems: 'center' },
-  overlayHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: '#1b5e20' },
-  overlayImage: { width: '100%', height: 350, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-  centeredStepsWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 50 },
-  analysisRow: { flexDirection: 'row', alignItems: 'center', width: '80%', marginBottom: 20 },
-  iconBox: { width: 35, alignItems: 'center', justifyContent: 'center' },
-  analysisText: { marginLeft: 15, fontSize: 16, color: '#444', fontWeight: '500' },
-  pendingIcon: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#ccc' },
+
+  overlayHeader: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e4eb",
+    alignItems: "center",
+  },
+
+  overlayHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1b5e20",
+  },
+
+  overlayImage: {
+    width: "100%",
+    height: 350,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+
+  centeredStepsWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 50,
+  },
+
+  analysisRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "80%",
+    marginBottom: 20,
+  },
+
+  iconBox: {
+    width: 35,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  analysisText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: "#444",
+    fontWeight: "500",
+  },
+
+  pendingIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ccc",
+  },
 });

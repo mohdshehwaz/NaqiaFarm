@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { colors } from "../styles/colors";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // 👈 important
 
 function CenteredTabIcon({
   icon,
@@ -24,13 +25,21 @@ function CenteredTabIcon({
 
 export default function TabLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); // 👈 safe area
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         lazy: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 70 + insets.bottom, // 👈 dynamic height
+            paddingBottom: insets.bottom, // 👈 bottom space fix
+          },
+        ],
       }}
     >
       {/* HOME */}
@@ -54,15 +63,10 @@ export default function TabLayout() {
 
       {/* CAMERA FAB */}
       <Tabs.Screen
-        name="scanner" // 👈 Check karo ki file ka naam app/(tabs)/scanner.tsx hi hai
+        name="scanner"
         options={{
-          tabBarLabel: "Camera", // Background logic ke liye
-          tabBarButton: ({ onPress, accessibilityState }) => (
-            <Pressable
-              onPress={onPress}
-              accessibilityState={accessibilityState}
-              style={styles.fabButton}
-            >
+          tabBarButton: ({ onPress }) => (
+            <Pressable onPress={onPress} style={styles.fabButton}>
               <View style={styles.fab}>
                 <Ionicons name="camera" size={30} color="#fff" />
               </View>
@@ -78,7 +82,7 @@ export default function TabLayout() {
           tabBarButton: ({ accessibilityState }) => (
             <Pressable
               onPress={() => {
-                router.replace("/(tabs)/account"); // 🔥 ye fix hai
+                router.replace("/(tabs)/account");
               }}
               accessibilityState={accessibilityState}
               style={styles.sideTabButton}
@@ -90,20 +94,18 @@ export default function TabLayout() {
             </Pressable>
           ),
         }}
-/>
+      />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 72,
     backgroundColor: colors.white,
     borderTopWidth: 0,
     elevation: 12,
   },
 
-  // 🔑 SIDE TABS — FULL HEIGHT + CENTER
   sideTabButton: {
     flex: 1,
     justifyContent: "center",
@@ -115,12 +117,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // 🔑 FAB
+  // 🔥 FAB Button
   fabButton: {
-    top: -14, // 👈 yahi tweak
+    top: -18, // 👈 perfect lift (adjust if needed)
     justifyContent: "center",
     alignItems: "center",
   },
+
   fab: {
     width: 66,
     height: 66,
