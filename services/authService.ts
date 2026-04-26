@@ -3,28 +3,64 @@
 import { API_BASE_URL } from "./api";
 
 export const sendOtp = async (mobile: string) => {
-    return new Promise<{ otp: string }>((resolve) => {
-      setTimeout(() => {
-        const otp = Math.floor(1000 + Math.random() * 9000).toString();
-        resolve({ otp });
-      }, 1000); // fake delay
-    });
-  };
+  console.log("In the api call otp")
+  const response = await fetch(`${API_BASE_URL}/mobile/send-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mobile: mobile,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Failed to send OTP");
+  }
+
+  return data;
+};
   
-  export const verifyOtp = async (
-    enteredOtp: string,
-    realOtp: string
-  ) => {
-    return new Promise<boolean>((resolve, reject) => {
-      setTimeout(() => {
-        if (enteredOtp === realOtp) {
-          resolve(true);
-        } else {
-          reject(new Error("Invalid OTP"));
-        }
-      }, 800);
-    });
-  };
+export const verifyOtp = async (mobile: string, otp: string) => {
+  const response = await fetch(`${API_BASE_URL}/mobile/verify-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mobile,
+      otp,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.metaData?.resultMessage || "OTP verification failed");
+  }
+
+  return data;
+};
+
+export const resendOtp = async (mobile: string) => {
+  const response = await fetch(`${API_BASE_URL}/mobile/send-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ mobile }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error("Failed to resend OTP");
+  }
+
+  return data;
+};
 
   
 

@@ -11,7 +11,7 @@ export const uploadCropImage = async (imageUri: string, lang: string) => {
   console.log("path is -> ",API_BASE_URL);
   formData.append("lang", lang); // 👈 🔥 IMPORTANT
 
-  const response = await fetch(`${API_BASE_URL}/upload`, {
+  const response = await fetch(`${API_BASE_URL}/Plant/upload`, {
     method: "POST",
     body: formData,
   });
