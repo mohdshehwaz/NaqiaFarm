@@ -88,7 +88,7 @@ function MenuItem({ icon, title, onPress }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f7f6",
+    backgroundColor: "#ffffff",
   },
 
   header: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   profileSection: {
     alignItems: "center",
     padding: 25,
-    backgroundColor: "#eaf5ea",
+    backgroundColor: "#ffffff",
   },
 
   logo: {

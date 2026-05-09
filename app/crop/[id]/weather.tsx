@@ -18,7 +18,7 @@ export default function WeatherScreen() {
 
   const insets = useSafeAreaInsets();
 
-  const API_KEY = "d0199de973310d07164caa0ef4ad6d61";
+  const API_KEY = "";
 
   useEffect(() => {
     getLocationWeather();
@@ -139,7 +139,7 @@ export default function WeatherScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#eef7ee",
+    backgroundColor: "#ffffff",
   },
 
   mainCard: {

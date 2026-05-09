@@ -83,7 +83,7 @@ export default function GuideScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#eef7ee",
+    backgroundColor: "#ffffff",
   },
 
   container: {

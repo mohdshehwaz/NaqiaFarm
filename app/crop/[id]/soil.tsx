@@ -104,7 +104,7 @@ export default function SoilScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#eef7ee",
+    backgroundColor: "#ffffff",
   },
 
   header: {

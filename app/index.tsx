@@ -12,7 +12,6 @@ export default function Index() {
     const checkLogin = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
-
         // ❌ no token
         if (!token) {
           router.replace("/(auth)/login");

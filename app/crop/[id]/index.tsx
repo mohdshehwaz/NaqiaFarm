@@ -42,9 +42,6 @@ export default function CropScreen() {
           <Text style={styles.heading}>
             🌾 {t(`home.crops.${crop}`)}
           </Text>
-          <Text style={styles.subHeading}>
-            Select Feature
-          </Text>
         </View>
 
         {/* 📦 Grid */}
@@ -77,7 +74,7 @@ export default function CropScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#eef7ee",
+    backgroundColor: "#ffffff",
   },
 
   container: {

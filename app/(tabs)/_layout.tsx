@@ -1,9 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  Tabs,
+  usePathname,
+} from "expo-router";
+
+import {
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
+
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../styles/colors";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // 👈 important
 
 function CenteredTabIcon({
   icon,
@@ -13,19 +21,23 @@ function CenteredTabIcon({
   focused: boolean;
 }) {
   return (
-    <View style={styles.centerIconWrapper}>
+    <View style={styles.iconContainer}>
       <Ionicons
         name={icon}
         size={26}
-        color={focused ? colors.primary : colors.inactive}
+        color={
+          focused
+            ? colors.primary
+            : colors.inactive
+        }
       />
     </View>
   );
 }
 
 export default function TabLayout() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets(); // 👈 safe area
+  const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -33,11 +45,12 @@ export default function TabLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         lazy: false,
+
         tabBarStyle: [
           styles.tabBar,
           {
-            height: 70 + insets.bottom, // 👈 dynamic height
-            paddingBottom: insets.bottom, // 👈 bottom space fix
+            height: 70 + insets.bottom,
+            paddingBottom: insets.bottom,
           },
         ],
       }}
@@ -46,32 +59,54 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          tabBarButton: ({ onPress, accessibilityState }) => (
-            <Pressable
-              onPress={onPress}
-              accessibilityState={accessibilityState}
-              style={styles.sideTabButton}
-            >
-              <CenteredTabIcon
-                icon="home"
-                focused={!!accessibilityState?.selected}
-              />
-            </Pressable>
-          ),
+          tabBarButton: ({ onPress }) => {
+            const focused =
+              pathname === "/home" ||
+              pathname === "/(tabs)/home";
+
+            return (
+              <Pressable
+                onPress={onPress}
+                style={styles.sideTabButton}
+              >
+                <CenteredTabIcon
+                  icon="home"
+                  focused={focused}
+                />
+              </Pressable>
+            );
+          },
         }}
       />
 
-      {/* CAMERA FAB */}
+      {/* SCANNER */}
       <Tabs.Screen
         name="scanner"
         options={{
-          tabBarButton: ({ onPress }) => (
-            <Pressable onPress={onPress} style={styles.fabButton}>
-              <View style={styles.fab}>
-                <Ionicons name="camera" size={30} color="#fff" />
-              </View>
-            </Pressable>
-          ),
+          tabBarButton: ({ onPress }) => {
+            const focused =
+              pathname === "/scanner" ||
+              pathname === "/(tabs)/scanner";
+
+            return (
+              <Pressable
+                onPress={onPress}
+                style={styles.fabButton}
+              >
+                <View style={styles.fab}>
+                  <Ionicons
+                    name="camera"
+                    size={30}
+                    color={
+                      focused
+                        ? "#ffffff"
+                        : "#d9d9d9"
+                    }
+                  />
+                </View>
+              </Pressable>
+            );
+          },
         }}
       />
 
@@ -79,20 +114,23 @@ export default function TabLayout() {
       <Tabs.Screen
         name="account"
         options={{
-          tabBarButton: ({ accessibilityState }) => (
-            <Pressable
-              onPress={() => {
-                router.replace("/(tabs)/account");
-              }}
-              accessibilityState={accessibilityState}
-              style={styles.sideTabButton}
-            >
-              <CenteredTabIcon
-                icon="person"
-                focused={!!accessibilityState?.selected}
-              />
-            </Pressable>
-          ),
+          tabBarButton: ({ onPress }) => {
+            const focused =
+              pathname === "/account" ||
+              pathname === "/(tabs)/account";
+
+            return (
+              <Pressable
+                onPress={onPress}
+                style={styles.sideTabButton}
+              >
+                <CenteredTabIcon
+                  icon="person"
+                  focused={focused}
+                />
+              </Pressable>
+            );
+          },
         }}
       />
     </Tabs>
@@ -101,9 +139,18 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.white,
+    backgroundColor: "#fff",
     borderTopWidth: 0,
-    elevation: 12,
+
+    elevation: 10,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
   },
 
   sideTabButton: {
@@ -112,14 +159,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  centerIconWrapper: {
+  iconContainer: {
     justifyContent: "center",
     alignItems: "center",
   },
 
-  // 🔥 FAB Button
   fabButton: {
-    top: -18, // 👈 perfect lift (adjust if needed)
+    top: -18,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -129,8 +175,10 @@ const styles = StyleSheet.create({
     height: 66,
     borderRadius: 33,
     backgroundColor: colors.primary,
+
     justifyContent: "center",
     alignItems: "center",
+
     elevation: 10,
   },
 });
