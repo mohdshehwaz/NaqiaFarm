@@ -16,6 +16,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { useLanguage } from "../context/LanguageContext";
 import { useIsFocused } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -51,57 +52,95 @@ export default function CameraScreen() {
   }
 
   const takePhoto = async () => {
-    if (loading) return;
+  if (loading) return;
 
-    try {
-      const picture = await cameraRef.current?.takePictureAsync({
-        quality: 0.7,
-        skipProcessing: true, // ✅ Android fix
-      });
+  try {
+    const picture = await cameraRef.current?.takePictureAsync({
+      quality: 0.7,
+      skipProcessing: true,
+    });
 
-      if (!picture?.uri) return;
+    if (!picture?.uri) return;
 
-      setClickedImageUri(picture.uri);
-      setShowAnalysisOverlay(true);
-      setLoading(true);
-      setCurrentAnalysisStep(0);
+    setClickedImageUri(picture.uri);
+    setShowAnalysisOverlay(true);
+    setLoading(true);
+    setCurrentAnalysisStep(0);
 
-      setTimeout(() => setCurrentAnalysisStep(1), 800);
+    setTimeout(() => setCurrentAnalysisStep(1), 800);
 
-      const compressed = await ImageManipulator.manipulateAsync(
-        picture.uri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
-      );
+    const compressed = await ImageManipulator.manipulateAsync(
+      picture.uri,
+      [{ resize: { width: 800 } }],
+      {
+        compress: 0.6,
+        format: ImageManipulator.SaveFormat.JPEG,
+      }
+    );
 
-      const res = await uploadCropImage(compressed.uri, language || "en");
-      const data = res?.data || res;
+    const token = await AsyncStorage.getItem("token");
+    const mobile = await AsyncStorage.getItem("mobile");
+    console.log("Mobile number iss -> ", mobile);
+    //await AsyncStorage.removeItem("token");
+    
 
-      setTimeout(() => setCurrentAnalysisStep(2), 1000);
-      setTimeout(() => setCurrentAnalysisStep(3), 1200);
+    // ✅ API CALL
+    const res = await uploadCropImage(
+      compressed.uri,
+      language || "en"
+    );
 
-      setTimeout(() => {
-        if (data?.identification) {
-          setShowAnalysisOverlay(false);
-          setLoading(false);
-          setClickedImageUri(null);
-
-          router.push({
-            pathname: "/(scan)/result",
-            params: {
-              data: JSON.stringify(data),
-              image: compressed.uri,
-            },
-          });
-        } else {
-          alert("No plant detected ❌");
-          setShowAnalysisOverlay(false);
-        }
-      }, 1500);
-    } catch (error) {
-      setShowAnalysisOverlay(false);
+    // ❌ null response
+    if (!res) {
+      throw new Error("No response from API");
     }
-  };
+
+    const data = res?.data || res;
+
+    setTimeout(() => setCurrentAnalysisStep(2), 1000);
+    setTimeout(() => setCurrentAnalysisStep(3), 1200);
+
+    setTimeout(() => {
+
+      // ✅ success
+      if (data?.identification) {
+
+        setShowAnalysisOverlay(false);
+        setLoading(false);
+        setClickedImageUri(null);
+
+        router.push({
+          pathname: "/(scan)/result",
+          params: {
+            data: JSON.stringify(data),
+            image: compressed.uri,
+          },
+        });
+
+      } else {
+
+        // ❌ no plant detected
+        alert("No plant detected ❌");
+
+        setShowAnalysisOverlay(false);
+        setLoading(false);
+        setClickedImageUri(null);
+      }
+
+    }, 1500);
+
+  } catch (error: any) {
+
+    console.log("Camera Error => ", error);
+
+    alert(error.message || "Something went wrong");
+
+    // ✅ IMPORTANT
+    setShowAnalysisOverlay(false);
+    setLoading(false);
+    setClickedImageUri(null);
+  }
+};
 
   const renderStatusIcon = (stepIndex: number) => {
     if (currentAnalysisStep > stepIndex) {

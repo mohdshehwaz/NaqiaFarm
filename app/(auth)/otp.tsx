@@ -35,6 +35,8 @@ export default function OtpScreen() {
 
       console.log("Verify response:", res);
       await AsyncStorage.setItem("token", res.data);
+      await AsyncStorage.setItem("mobile", mobile as string);
+      router.dismissAll();
 
       // ✅ success → home screen (no back)
       router.replace("/(tabs)/home");
