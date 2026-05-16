@@ -11,8 +11,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // 👈 Token nikalne ke liye (Ya fir SecureStore use karein)
+import { getPlantHistory } from "@/services/mobileService";
 
-// C# Entity ke hisaab se Interface
+// C# Entity aur BaseResponse ke hisaab se Interface
 interface PlantScanHistory {
   id: number;
   mobileNumber: string;
@@ -29,55 +31,40 @@ export default function HistoryScreen() {
   const router = useRouter();
   const [history, setHistory] = useState<PlantScanHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
+  // Screen ke andar ka fetchHistory function:
   const fetchHistory = async () => {
     try {
-      // 👈 Yahan apni API call lagayein:
-      // const res = await fetch(`https://your-api.com/api/history/99999999`);
-      // const data = await res.json();
-      
-      // Dummy Data Testing ke liye
-      const dummyData: PlantScanHistory[] = [
-        {
-          id: 1,
-          mobileNumber: "99999999",
-          filePath: "https://ghoulbucketweb.s3.ap-southeast-2.amazonaws.com/PlantHistory/ce5f2745-5347-47fe-b284-97ba0677ba0c.jpg",
-          identification: "Sugarcane",
-          problem: "Red Rot",
-          treatment: "Use healthy seeds and fungicides.",
-          summary: "Fungal infection detected in the stalk.",
-          confidence: "95%",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          mobileNumber: "99999999",
-          filePath: "https://ghoulbucketweb.s3.ap-southeast-2.amazonaws.com/PlantHistory/ce5f2745-5347-47fe-b284-97ba0677ba0c.jpg",
-          identification: "Wheat",
-          problem: "Leaf Rust",
-          treatment: "Apply sulfur-based spray.",
-          summary: "Orange spots seen on leaves.",
-          confidence: "88%",
-          createdAt: new Date().toISOString(),
-        }
-      ];
-      setHistory(dummyData);
-    } catch (error) {
-      console.error(error);
+      setLoading(true);
+      setErrorMessage(null);
+
+      // Standalone function ko call kiya
+      const result = await getPlantHistory(); 
+
+      // result.data me list milegi kyunki C# se BaseResponse<List<...>> aa rha hai
+      if (result && result.data) {
+        setHistory(result.data); 
+      } else {
+        setHistory([]);
+      }
+
+    } catch (error: any) {
+      // Jo bhi error throw hoga (Timeout, Empty JSON, Server Error), wo yahan catch ho jayega
+      setErrorMessage(error.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🚀 Naye Page par navigate karne ka function
   const goToDetail = (item: PlantScanHistory) => {
     router.push({
       pathname: "/(tabs)/account/history-detail",
-      params: { data: JSON.stringify(item) }, // Pura object string banake bhej rahe hain
+      params: { data: JSON.stringify(item) },
     });
   };
 
@@ -115,6 +102,14 @@ export default function HistoryScreen() {
 
       {loading ? (
         <ActivityIndicator size="large" color="#1b5e20" style={{ marginTop: 40 }} />
+      ) : errorMessage ? (
+        // Error state component
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+          <Pressable style={styles.retryButton} onPress={fetchHistory}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={history}
@@ -136,9 +131,7 @@ const styles = StyleSheet.create({
   header: { padding: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
   headerTitle: { fontSize: 24, fontWeight: "bold", color: "#1b5e20" },
   subTitle: { fontSize: 14, color: "#666", marginTop: 2 },
-  
   listContainer: { padding: 16 },
-  
   card: {
     backgroundColor: "#fff",
     flexDirection: "row",
@@ -146,29 +139,25 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     marginBottom: 12,
-    // Shadows
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  
   thumbnail: { width: 70, height: 70, borderRadius: 12, backgroundColor: "#eee" },
-  
   info: { flex: 1, marginLeft: 15 },
-  
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  
   cropName: { fontSize: 17, fontWeight: "700", color: "#333" },
-  
   confBadge: { backgroundColor: "#e8f5e9", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  
   confText: { fontSize: 11, color: "#2e7d32", fontWeight: "700" },
-  
   problemText: { fontSize: 14, color: "#d32f2f", marginBottom: 4 },
-  
   dateText: { fontSize: 12, color: "#999" },
+  empty: { textAlign: "center", marginTop: 100, color: "#aaa", fontSize: 16 },
   
-  empty: { textAlign: "center", marginTop: 100, color: "#aaa", fontSize: 16 }
+  // New Styles for error handling
+  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  errorText: { fontSize: 16, color: "#666", marginBottom: 15, textAlign: "center" },
+  retryButton: { backgroundColor: "#1b5e20", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  retryText: { color: "#fff", fontWeight: "bold" }
 });
