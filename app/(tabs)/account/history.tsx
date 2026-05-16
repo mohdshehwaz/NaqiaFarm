@@ -11,17 +11,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // 👈 Token nikalne ke liye (Ya fir SecureStore use karein)
 import { getPlantHistory } from "@/services/mobileService";
 
-// C# Entity aur BaseResponse ke hisaab se Interface
+// 🎯 Naye C# Model ke hisaab se interface update kiya hai
 interface PlantScanHistory {
   id: number;
   mobileNumber: string;
   filePath: string;
-  identification: string;
-  problem: string;
-  treatment: string;
+  cropName: string;            // Old: identification
+  disease: string;             // Old: problem
+  recommendedFertilizer: string; // 🔥 Naya Field
+  treatmentSteps: string;       // Old: treatment
   summary: string;
   confidence: string;
   createdAt: string;
@@ -37,24 +37,34 @@ export default function HistoryScreen() {
     fetchHistory();
   }, []);
 
-  // Screen ke andar ka fetchHistory function:
   const fetchHistory = async () => {
     try {
       setLoading(true);
       setErrorMessage(null);
 
-      // Standalone function ko call kiya
       const result = await getPlantHistory(); 
 
-      // result.data me list milegi kyunki C# se BaseResponse<List<...>> aa rha hai
       if (result && result.data) {
-        setHistory(result.data); 
+        // Safe mapping backend PascalCase vs frontend camelCase handle karne ke liye
+        const mappedData = result.data.map((item: any) => ({
+          id: item.id,
+          mobileNumber: item.mobileNumber || item.MobileNumber,
+          filePath: item.filePath || item.FilePath,
+          cropName: item.cropName || item.CropName,
+          disease: item.disease || item.Disease,
+          recommendedFertilizer: item.recommendedFertilizer || item.RecommendedFertilizer,
+          treatmentSteps: item.treatmentSteps || item.TreatmentSteps,
+          summary: item.summary || item.Summary,
+          confidence: item.confidence || item.Confidence,
+          createdAt: item.createdAt || item.CreatedAt,
+        }));
+
+        setHistory(mappedData); 
       } else {
         setHistory([]);
       }
 
     } catch (error: any) {
-      // Jo bhi error throw hoga (Timeout, Empty JSON, Server Error), wo yahan catch ho jayega
       setErrorMessage(error.message || "Something went wrong.");
     } finally {
       setLoading(false);
@@ -74,14 +84,17 @@ export default function HistoryScreen() {
       
       <View style={styles.info}>
         <View style={styles.topRow}>
-          <Text style={styles.cropName}>{item.identification}</Text>
+          {/* 🎯 Naya Property Use Kiya: cropName (Ab card par sirf Fasal ka naam saaf dikhega) */}
+          <Text style={styles.cropName} numberOfLines={1}>{item.cropName }</Text>
+          
           <View style={styles.confBadge}>
             <Text style={styles.confText}>{item.confidence}</Text>
           </View>
         </View>
         
+        {/* ⚠️ Naya Property Use Kiya: disease (Bimari ka naam line limit ke sath) */}
         <Text style={styles.problemText} numberOfLines={1}>
-          ⚠️ {item.problem}
+          ⚠️ {item.disease}
         </Text>
         
         <Text style={styles.dateText}>
@@ -97,13 +110,11 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Plant History</Text>
-        <Text style={styles.subTitle}>Check your previous scans</Text>
       </View>
 
       {loading ? (
         <ActivityIndicator size="large" color="#1b5e20" style={{ marginTop: 40 }} />
       ) : errorMessage ? (
-        // Error state component
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{errorMessage}</Text>
           <Pressable style={styles.retryButton} onPress={fetchHistory}>
@@ -148,14 +159,13 @@ const styles = StyleSheet.create({
   thumbnail: { width: 70, height: 70, borderRadius: 12, backgroundColor: "#eee" },
   info: { flex: 1, marginLeft: 15 },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  cropName: { fontSize: 17, fontWeight: "700", color: "#333" },
+  // Headings ka color charcoal dark (#333) hi rakha hai taaki zyada green na lage
+  cropName: { fontSize: 17, fontWeight: "700", color: "#333", flex: 1, marginRight: 8 },
   confBadge: { backgroundColor: "#e8f5e9", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   confText: { fontSize: 11, color: "#2e7d32", fontWeight: "700" },
   problemText: { fontSize: 14, color: "#d32f2f", marginBottom: 4 },
   dateText: { fontSize: 12, color: "#999" },
   empty: { textAlign: "center", marginTop: 100, color: "#aaa", fontSize: 16 },
-  
-  // New Styles for error handling
   errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   errorText: { fontSize: 16, color: "#666", marginBottom: 15, textAlign: "center" },
   retryButton: { backgroundColor: "#1b5e20", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },

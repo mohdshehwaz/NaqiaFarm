@@ -52,63 +52,65 @@ export default function CameraScreen() {
   }
 
   const takePhoto = async () => {
-  if (loading) return;
+    if (loading) return;
 
-  try {
-    const picture = await cameraRef.current?.takePictureAsync({
-      quality: 0.7,
-      skipProcessing: true,
-    });
+    try {
+      const picture = await cameraRef.current?.takePictureAsync({
+        quality: 0.7,
+        skipProcessing: true,
+      });
 
-    if (!picture?.uri) return;
+      if (!picture?.uri) return;
 
-    setClickedImageUri(picture.uri);
-    setShowAnalysisOverlay(true);
-    setLoading(true);
-    setCurrentAnalysisStep(0);
+      setClickedImageUri(picture.uri);
+      setShowAnalysisOverlay(true);
+      setLoading(true);
+      
+      // Step 0: Analysing Image
+      setCurrentAnalysisStep(0);
 
-    setTimeout(() => setCurrentAnalysisStep(1), 800);
+      const compressed = await ImageManipulator.manipulateAsync(
+        picture.uri,
+        [{ resize: { width: 800 } }],
+        {
+          compress: 0.6,
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
 
-    const compressed = await ImageManipulator.manipulateAsync(
-      picture.uri,
-      [{ resize: { width: 800 } }],
-      {
-        compress: 0.6,
-        format: ImageManipulator.SaveFormat.JPEG,
+      // Step 1: Measuring light level
+      setCurrentAnalysisStep(1);
+
+      // ✅ REAL API CALL
+      const res = await uploadCropImage(
+        compressed.uri,
+        language || "en"
+      );
+
+      if (!res) {
+        throw new Error("No response from API");
       }
-    );
 
-    const token = await AsyncStorage.getItem("token");
-    const mobile = await AsyncStorage.getItem("mobile");
-    console.log("Mobile number iss -> ", mobile);
-    //await AsyncStorage.removeItem("token");
-    
+      // C# standard ke hisaab se data wrapper nikalein
+      const data = res?.data || res;
 
-    // ✅ API CALL
-    const res = await uploadCropImage(
-      compressed.uri,
-      language || "en"
-    );
+      // 🎯 Step 2 & 3: Response aane ke baad animation ko tezi se complete karo
+      setCurrentAnalysisStep(2); // Identifying characteristics
+      
+      // Chota sa delay taaki user ko steps complete hote hue dikhein
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      setCurrentAnalysisStep(3); // Preparing results
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
-    // ❌ null response
-    if (!res) {
-      throw new Error("No response from API");
-    }
+      // 🎯 FIX: 'identification' ki jagah naye model ke keys check karein
+      const hasCropData = data?.cropName || data?.CropName || data?.disease || data?.Disease;
 
-    const data = res?.data || res;
-
-    setTimeout(() => setCurrentAnalysisStep(2), 1000);
-    setTimeout(() => setCurrentAnalysisStep(3), 1200);
-
-    setTimeout(() => {
-
-      // ✅ success
-      if (data?.identification) {
-
+      if (hasCropData) {
         setShowAnalysisOverlay(false);
         setLoading(false);
         setClickedImageUri(null);
 
+        // Result screen par data aur image bhej do
         router.push({
           pathname: "/(scan)/result",
           params: {
@@ -116,31 +118,24 @@ export default function CameraScreen() {
             image: compressed.uri,
           },
         });
-
       } else {
-
-        // ❌ no plant detected
-        alert("No plant detected ❌");
-
+        // ❌ Agar crop ya disease dono me se kuch na mile
+        alert("No plant detected ❌. Please take a clearer photo.");
         setShowAnalysisOverlay(false);
         setLoading(false);
         setClickedImageUri(null);
       }
 
-    }, 1500);
-
-  } catch (error: any) {
-
-    console.log("Camera Error => ", error);
-
-    alert(error.message || "Something went wrong");
-
-    // ✅ IMPORTANT
-    setShowAnalysisOverlay(false);
-    setLoading(false);
-    setClickedImageUri(null);
-  }
-};
+    } catch (error: any) {
+      console.log("Camera Error => ", error);
+      alert(error.message || "Something went wrong");
+      
+      // Reset states on error
+      setShowAnalysisOverlay(false);
+      setLoading(false);
+      setClickedImageUri(null);
+    }
+  };
 
   const renderStatusIcon = (stepIndex: number) => {
     if (currentAnalysisStep > stepIndex) {
