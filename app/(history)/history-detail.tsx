@@ -1,10 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, Image, Pressable } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router"; // 👈 Stack import kiya
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-// Naye C# model ke according typescript interface
 interface HistoryDetailItem {
   cropName: string;
   disease: string;
@@ -25,16 +24,15 @@ export default function HistoryDetailScreen() {
     if (params.data) {
       const parsed = JSON.parse(params.data as string);
       
-      // 🎯 Safe Mapping: Backend PascalCase aur frontend camelCase dono ko ek sath handle kiya
       item = {
-        cropName: parsed.cropName || parsed.CropName,
-        disease: parsed.disease || parsed.Disease,
-        confidence: parsed.confidence || parsed.Confidence,
-        recommendedFertilizer: parsed.recommendedFertilizer || parsed.RecommendedFertilizer,
-        treatmentSteps: parsed.treatmentSteps || parsed.TreatmentSteps,
-        summary: parsed.summary || parsed.Summary,
-        filePath: parsed.filePath || parsed.FilePath,
-        createdAt: parsed.createdAt || parsed.CreatedAt,
+        cropName: parsed.cropName || parsed.CropName || parsed.identification || parsed.Identification || "Unknown Crop",
+        disease: parsed.disease || parsed.Disease || parsed.problem || parsed.Problem || "Healthy",
+        confidence: parsed.confidence || parsed.Confidence || "0%",
+        recommendedFertilizer: parsed.recommendedFertilizer || parsed.RecommendedFertilizer || "",
+        treatmentSteps: parsed.treatmentSteps || parsed.TreatmentSteps || parsed.treatment || parsed.Treatment || "",
+        summary: parsed.summary || parsed.Summary || "",
+        filePath: parsed.filePath || parsed.FilePath || "",
+        createdAt: parsed.createdAt || parsed.CreatedAt || "",
       };
     }
   } catch (e) {
@@ -56,17 +54,19 @@ export default function HistoryDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Custom Header */}
+      {/* 🎯 FIX: Yeh line Expo Router ke default auto-header ko permanently hide kar degi */}
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Sirf aapka Custom Header chalega ab */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </Pressable>
-        <Text style={styles.headerTitle}>Scan Result</Text>
+        <Text style={styles.headerTitle}>History Details</Text>
         <View style={{ width: 40 }} /> 
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Image Check */}
         {item.filePath ? (
           <Image source={{ uri: item.filePath }} style={styles.mainImage} />
         ) : (
@@ -78,40 +78,35 @@ export default function HistoryDetailScreen() {
         
         <View style={styles.content}>
           <View style={styles.statusRow}>
-            {/* 🌾 Identification ki jagah Crop Name ka Badge */}
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.cropName || "Unknown Crop"}</Text>
+              <Text style={styles.badgeText}>{item.cropName}</Text>
             </View>
-            <Text style={styles.confidenceText}>Accuracy: {item.confidence || "0%"}</Text>
+            <Text style={styles.confidenceText}>Accuracy: {item.confidence}</Text>
           </View>
 
-          {/* ⚠️ Problem Detected (Disease Name) */}
           <View style={styles.section}>
             <Text style={styles.label}>⚠️ Problem Detected</Text>
-            <Text style={styles.value}>{item.disease || "Healthy / No problem identified"}</Text>
+            <Text style={styles.value}>{item.disease}</Text>
           </View>
 
-          {/* 🧪 Recommended Fertilizer Section (🔥 Naya Section Joda!) */}
-          {item.recommendedFertilizer && (
+          {item.recommendedFertilizer ? (
             <View style={styles.section}>
               <Text style={styles.label}>🧪 Recommended Fertilizer & Nutrients</Text>
               <Text style={styles.value}>{item.recommendedFertilizer}</Text>
             </View>
-          )}
+          ) : null}
 
-          {/* 💊 Treatment Steps */}
           <View style={styles.section}>
             <Text style={styles.label}>💊 Suggested Treatment Steps</Text>
-            <Text style={styles.value}>{item.treatmentSteps || "No treatment suggested"}</Text>
+            <Text style={styles.value}>{item.treatmentSteps}</Text>
           </View>
 
-          {/* 🧠 AI Summary */}
-          {item.summary && (
+          {item.summary ? (
             <View style={styles.section}>
               <Text style={styles.label}>🧠 Detailed Summary & Reasons</Text>
               <Text style={styles.value}>{item.summary}</Text>
             </View>
-          )}
+          ) : null}
 
           <View style={styles.footer}>
             <Text style={styles.date}>
@@ -137,7 +132,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f0f0f0" 
   },
   backBtn: { padding: 5 },
-  // Header text charcoal black kiya
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "#333" }, 
   mainImage: { width: "100%", height: 320 },
   content: { 
@@ -147,7 +141,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30, 
     borderTopRightRadius: 30,
     minHeight: 500,
-    // Add simple shadow effect to the sheet container
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.05,
@@ -159,7 +152,6 @@ const styles = StyleSheet.create({
   badgeText: { color: "#2e7d32", fontWeight: "bold", fontSize: 15 },
   confidenceText: { color: "#666", fontWeight: "600" },
   section: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: "#f9f9f9" },
-  // 🎯 UI Fix: Green hata kar heading text ko bold charcoal dark (#333) kiya
   label: { fontSize: 16, fontWeight: "700", color: "#333", marginBottom: 6 }, 
   value: { fontSize: 15, color: "#444", lineHeight: 22 },
   footer: { marginTop: 20, alignItems: "center", paddingBottom: 40 },

@@ -37,6 +37,7 @@ export default function HistoryScreen() {
     fetchHistory();
   }, []);
 
+  // HistoryScreen ke andar ka sirf fetchHistory update kiya hai baaki code same hai aapka
   const fetchHistory = async () => {
     try {
       setLoading(true);
@@ -45,17 +46,17 @@ export default function HistoryScreen() {
       const result = await getPlantHistory(); 
 
       if (result && result.data) {
-        // Safe mapping backend PascalCase vs frontend camelCase handle karne ke liye
         const mappedData = result.data.map((item: any) => ({
           id: item.id,
           mobileNumber: item.mobileNumber || item.MobileNumber,
           filePath: item.filePath || item.FilePath,
-          cropName: item.cropName || item.CropName,
-          disease: item.disease || item.Disease,
-          recommendedFertilizer: item.recommendedFertilizer || item.RecommendedFertilizer,
-          treatmentSteps: item.treatmentSteps || item.TreatmentSteps,
-          summary: item.summary || item.Summary,
-          confidence: item.confidence || item.Confidence,
+          // Safe binding: Naya cropName na mile to purana identification check karega
+          cropName: item.cropName || item.CropName || item.identification || item.Identification || "Unknown Crop",
+          disease: item.disease || item.Disease || item.problem || item.Problem || "Healthy",
+          recommendedFertilizer: item.recommendedFertilizer || item.RecommendedFertilizer || "",
+          treatmentSteps: item.treatmentSteps || item.TreatmentSteps || item.treatment || item.Treatment || "",
+          summary: item.summary || item.Summary || "",
+          confidence: item.confidence || item.Confidence || "0%",
           createdAt: item.createdAt || item.CreatedAt,
         }));
 
@@ -63,7 +64,6 @@ export default function HistoryScreen() {
       } else {
         setHistory([]);
       }
-
     } catch (error: any) {
       setErrorMessage(error.message || "Something went wrong.");
     } finally {
@@ -73,7 +73,7 @@ export default function HistoryScreen() {
 
   const goToDetail = (item: PlantScanHistory) => {
     router.push({
-      pathname: "/(tabs)/account/history-detail",
+      pathname: "/history-detail",
       params: { data: JSON.stringify(item) },
     });
   };
